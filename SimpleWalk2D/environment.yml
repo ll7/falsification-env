@@ -1,0 +1,8 @@
+name: simple_walk2d
+channels:
+  - conda-forge
+dependencies:
+  - python=3.*
+  - numpy
+  - gym
+  - matplotlib
