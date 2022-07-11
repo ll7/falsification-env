@@ -25,9 +25,9 @@ def main():
         env.render()
     env.close()
 
-    logging.debug('stabel_baselines3 env_checker')
-    from stable_baselines3.common import env_checker
-    env_checker.check_env(env)
+    # logging.debug('stabel_baselines3 env_checker')
+    # from stable_baselines3.common import env_checker
+    # env_checker.check_env(env)
 
 if __name__ == '__main__':
     main()

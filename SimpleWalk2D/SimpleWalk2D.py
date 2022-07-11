@@ -22,7 +22,8 @@ class SimpleWalk2DDynGoal(Env):
     def __init__(self):
         """
         Initialize the environment
-        Big square as the environment and sub squares as the goal"""
+        Big square as the environment and sub squares as the goal
+        """
         
         # set the dimensions of the environment
         # environment is square, therefore x and y are the same
@@ -43,7 +44,7 @@ class SimpleWalk2DDynGoal(Env):
         # ensure that the goal can not walk out of the environment
         self.goal_max_speed =  min(0.5 * self.width / (self.max_steps + 1), 0.9)
         
-        # set the distance when the goal is reached
+        """set the distance when the goal is reached"""
         self.viable_goal_distance = 0.5
         
         # set the max speed of the agent
@@ -90,7 +91,10 @@ class SimpleWalk2DDynGoal(Env):
         return distance_to_goal     
         
     def __goal_direction(self):
-        """calculate direction from init goal position through the middle of the env for the goal"""
+        """
+        calculate direction from inital goal position through the middle of 
+        the squared environment for the goal moving direction
+        """
         # calculate the center of the environment
         center_point = self.x_min + self.width / 2
         
@@ -114,8 +118,11 @@ class SimpleWalk2DDynGoal(Env):
         
         # catch length of zero vectors
         if (vector_1_length == 0.0) or (vector_2_length == 0.0):
-            """if one of the vectors is zero, the angle is undefined
-            we return 0.0 in this unlikely edge case"""
+            """
+            if one of the vectors is zero, the angle is undefined
+            we return 0.0 in this unlikely edge case
+            """
+            logging.warning("vector_1_length or vector_2_length is zero")
             return 0.0
         
         logging.debug("vector 1: {}".format(vector_1))
@@ -124,6 +131,7 @@ class SimpleWalk2DDynGoal(Env):
         unit_vector_1 = vector_1 / vector_1_length
         unit_vector_2 = vector_2 / vector_2_length
 
+        # dot product, clipped due to numerical inaccuracies
         dot_product = np.clip(
             np.dot(unit_vector_1, unit_vector_2), 
             -1.0, 
@@ -137,6 +145,11 @@ class SimpleWalk2DDynGoal(Env):
         return angle
     
     def step(self, action):
+        """
+        take a step in the environment
+        calculate the reward for step
+        update the environment
+        """
         previous_state = self.state
         # update position
         self.state[0] += action[0] # update x
@@ -257,6 +270,9 @@ class SimpleWalk2DDynGoal(Env):
         return self.state
     
     def render(self):
+        """
+        show a plot of the goal and agent movement.
+        """
         
         # logging.debug("visited states: ", self.state_array)
         logging.debug("x: {}".format(self.state_array[0]))
