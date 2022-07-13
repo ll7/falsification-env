@@ -1,9 +1,14 @@
+"""
+2D env, where the goal moves in a random direction.
+Env based on: https://stable-baselines3.readthedocs.io/en/master/guide/custom_env.html
+"""
+
 from gym import Env
 from gym.spaces import Box
 import numpy as np
 
 import math
-import sys
+# import sys
 
 import matplotlib.pyplot as plt
 
@@ -24,6 +29,7 @@ class SimpleWalk2DDynGoal(Env):
         Initialize the environment
         Big square as the environment and sub squares as the goal
         """
+        super(SimpleWalk2DDynGoal, self).__init__()
         
         # set the dimensions of the environment
         # environment is square, therefore x and y are the same
