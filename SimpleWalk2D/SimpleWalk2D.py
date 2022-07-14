@@ -35,14 +35,21 @@ class SimpleWalk2DDynGoal(Env):
         # environment is square, therefore x and y are the same
         self.x_min = 0.0
         self.x_max = 20.0
+        
+        
         self.width = self.x_max - self.x_min
+        """width and height of the environment"""
         
         logger = logging.getLogger(__name__)
         
-        # set maximum number of steps to reach the goal
-        # if the maximum number of steps is reached, the episode is over
-        # maximum is max steps to cross the field
+
         self.max_steps = int(math.ceil(self.x_max - self.x_min))
+        """
+        set maximum number of steps to reach the goal.
+        if the maximum number of steps is reached, the episode is over.
+        maximum is max steps to cross the field.
+        """
+        
         
         # set goal boarder
         self.goal_boarder = 3.0
@@ -50,8 +57,9 @@ class SimpleWalk2DDynGoal(Env):
         # ensure that the goal can not walk out of the environment
         self.goal_max_speed =  min(0.5 * self.width / (self.max_steps + 1), 0.9)
         
-        """set the distance when the goal is reached"""
+        
         self.viable_goal_distance = 0.5
+        """set the distance when the goal is reached"""
         
         # set the max speed of the agent
         self.agent_max_speed = 1.0
