@@ -60,7 +60,7 @@ def main():
     logger.setLevel(logging.DEBUG)
 
     model.learn(
-        total_timesteps=100_000, 
+        total_timesteps=100_000,
         callback = callback
         )
 

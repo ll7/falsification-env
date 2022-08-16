@@ -14,16 +14,20 @@ import matplotlib.pyplot as plt
 
 # logging
 import logging
-#logger = logging.getLogger('SimpleWalk2D')
-#logger.setLevel(logging.DEBUG)
-logging.getLogger('matplotlib.font_manager').disabled = True # disable font warnings based on https://stackoverflow.com/questions/56618739/matplotlib-throws-warning-message-because-of-findfont-python
 
+# logger = logging.getLogger('SimpleWalk2D')
+# logger.setLevel(logging.DEBUG)
+logging.getLogger('matplotlib.font_manager').disabled = True  # disable font warnings based on
+
+
+# https://stackoverflow.com/questions/56618739/matplotlib-throws-warning-message-because-of-findfont-python
 
 
 class SimpleWalk2DDynGoal(Env):
     """
     simple walk environment in 2D with a continuous action and state space
     """
+
     def __init__(self):
         """
         Initialize the environment
@@ -36,12 +40,10 @@ class SimpleWalk2DDynGoal(Env):
         self.x_min = 0.0
         self.x_max = 20.0
 
-
         self.width = self.x_max - self.x_min
         """width and height of the environment"""
 
         logger = logging.getLogger(__name__)
-
 
         self.max_steps = int(math.ceil(self.x_max - self.x_min))
         """
@@ -50,13 +52,11 @@ class SimpleWalk2DDynGoal(Env):
         maximum is max steps to cross the field.
         """
 
-
         # set goal boarder
         self.goal_boarder = 3.0
 
         # ensure that the goal can not walk out of the environment
-        self.goal_max_speed =  min(0.5 * self.width / (self.max_steps + 1), 0.9)
-
+        self.goal_max_speed = min(0.5 * self.width / (self.max_steps + 1), 0.9)
 
         self.viable_goal_distance = 0.5
         """set the distance when the goal is reached"""
@@ -68,11 +68,11 @@ class SimpleWalk2DDynGoal(Env):
         self.action_space = Box(
             low=-self.agent_max_speed,
             high=self.agent_max_speed,
-            shape=(2, )
-            ) # x and y change of position
+            shape=(2,)
+        )  # x and y change of position
 
         # TODO must be extended to 4 goal elements. 2 current and 2 future
-        self.observation_space = Box(low=self.x_min, high=self.x_max, shape=(6, )) # x,y position, x,y goal
+        self.observation_space = Box(low=self.x_min, high=self.x_max, shape=(6,))  # x,y position, x,y goal
 
         # safe past states in an array, safe x and y positions
         self.state = np.ndarray(shape=(6,), dtype=np.float32)
@@ -81,6 +81,26 @@ class SimpleWalk2DDynGoal(Env):
         self.goal_direction = np.array([0.0, 0.0])
         self.angle = 0.0
 
+        # set x and y of position
+        # self.state[0:2] = np.random.uniform(low=self.x_min, high=self.x_max, size=(2,))
+
+        # set goal to a random value, shrunken from entire environment size
+        self.state[2:4] = np.random.uniform(
+            low=self.x_min + self.goal_boarder,
+            high=self.x_max - self.goal_boarder,
+            size=(2,)
+        )
+
+        self.initial_goal = self.state[2:4].copy()
+
+        # value to return if asked if goal has been reached
+        self.reached_goal = False
+
+    def env_size(self):
+        return self.x_min, self.x_max
+
+    def max_speed(self):
+        return self.agent_max_speed
 
     def __out_of_bounds(self):
         """check if the current state is out of bounds"""
@@ -92,9 +112,15 @@ class SimpleWalk2DDynGoal(Env):
             else:
                 return False
 
-    def __append_state(self):
+    def append_state(self):
         self.state_array[0].append(self.state[0])
         self.state_array[1].append(self.state[1])
+
+    def ask_for_goal(self):
+        if self.reached_goal:
+            return True
+        else:
+            return False
 
     def __append_goal(self):
         self.goal_array[0].append(self.state[2])
@@ -138,8 +164,8 @@ class SimpleWalk2DDynGoal(Env):
             logging.warning("vector_1_length or vector_2_length is zero")
             return 0.0
 
-        logging.debug("vector 1: {}".format(vector_1))
-        logging.debug("vector 2: {}".format(vector_2))
+        # logging.debug("vector 1: {}".format(vector_1))
+        # logging.debug("vector 2: {}".format(vector_2))
 
         unit_vector_1 = vector_1 / vector_1_length
         unit_vector_2 = vector_2 / vector_2_length
@@ -149,7 +175,7 @@ class SimpleWalk2DDynGoal(Env):
             np.dot(unit_vector_1, unit_vector_2),
             -1.0,
             1.0
-            )
+        )
 
         angle = np.arccos(dot_product)
         if math.isnan(angle):
@@ -165,14 +191,14 @@ class SimpleWalk2DDynGoal(Env):
         """
         previous_state = self.state
         # update position
-        self.state[0] += action[0] # update x
-        self.state[1] += action[1] # update y
-        self.__append_state()
+        self.state[0] += action[0]  # update x
+        self.state[1] += action[1]  # update y
+        self.append_state()
         new_state = self.state
         self.steps_taken += 1
         distance_to_goal = self.__distance_to_goal()
 
-        if self.steps_taken >= self.max_steps:
+        if self.steps_taken >= self.max_steps:  # TODO: Why is this >=?
             # maximum number of steps reached
             logging.debug("maximum number of steps reached")
             reward = -1000.0
@@ -186,44 +212,44 @@ class SimpleWalk2DDynGoal(Env):
             # reached goal
             reward = 1000.0
             logging.debug("reached goal")
+            self.reached_goal = True
             done = True
         else:
             # penalize for not moving towards the goal at for each step
             movement = self.distance_to_goal - distance_to_goal
-            logging.debug("movement: {}".format(movement))
+            # logging.debug("movement: {}".format(movement))
             # reward a movement towards the goal
             reward = movement * 80 - 100
             done = False
 
-            # update everything
-            # TODO update the last goal
-            self.state[4:6] = self.state[2:4]
+        # update everything
+        # TODO update the last goal
+        self.state[4:6] = self.state[2:4]
 
-            # multiply the goal direction by the max goal speed and apply to goal for movement
-            self.state[2:4] += self.goal_direction * self.goal_max_speed
+        # multiply the goal direction by the max goal speed and apply to goal for movement
+        self.state[2:4] += self.goal_direction * self.goal_max_speed
 
-            # save the goal movement
-            self.__append_goal()
+        # save the goal movement
+        self.__append_goal()
 
-            # update distance to goal
-            self.distance_to_goal = distance_to_goal
+        # update distance to goal
+        self.distance_to_goal = distance_to_goal
 
-            # TODO some error with calculating the angle
-            # punish based on direction change
-            if self.steps_taken > 1:
-                previous_direction = np.array([
-                    self.state_array[0][-2] - self.state_array[0][-3],
-                    self.state_array[1][-2] - self.state_array[1][-3]
-                ])
-                now_direction = np.array([
-                    self.state_array[0][-1] - self.state_array[0][-2],
-                    self.state_array[1][-1] - self.state_array[1][-2]
-                ])
-
-                self.angle = self.__calculate_angle(previous_direction, now_direction)
-                logging.debug("angle: {}".format(self.angle))
-                reward -= abs(self.angle / math.pi) * 30 # penalty of zero to 100
-
+            # # TODO some error with calculating the angle
+            # # punish based on direction change
+            # if self.steps_taken > 1:
+            #     previous_direction = np.array([
+            #         self.state_array[0][-2] - self.state_array[0][-3],
+            #         self.state_array[1][-2] - self.state_array[1][-3]
+            #     ])
+            #     now_direction = np.array([
+            #         self.state_array[0][-1] - self.state_array[0][-2],
+            #         self.state_array[1][-1] - self.state_array[1][-2]
+            #     ])
+            #
+            #     self.angle = self.__calculate_angle(previous_direction, now_direction)
+            #     # logging.debug("angle: {}".format(self.angle))
+            #     reward -= abs(self.angle / math.pi) * 30  # penalty of zero to 100
 
         info = {'distance_to_goal': self.distance_to_goal,
                 'steps_taken': self.steps_taken,
@@ -237,33 +263,29 @@ class SimpleWalk2DDynGoal(Env):
         logging.debug("")
         logging.debug("reset")
 
-        # set x and y of position
-        self.state[0:2] = np.random.uniform(low=self.x_min, high=self.x_max, size=(2,))
-
-        # set goal to a random value, shrunken from entire environment size
-        self.state[2:4] = np.random.uniform(
-            low=self.x_min + self.goal_boarder,
-            high=self.x_max - self.goal_boarder,
-            size=(2,)
-            )
+        self.state[2:4] = self.initial_goal
+        # logging.debug("INI GOAL {}".format(self.initial_goal))
+        # logging.debug("STATE: {}".format(self.state[2:4]))
 
         # empty array for saving all visited states
-        self.state_array = [[], []] # x, y
+        self.state_array = [[], []]  # x, y
 
         # empty array for all movements of the goal
-        self.goal_array = [[], []] # x, y
+        self.goal_array = [[], []]  # x, y
 
         # init append state and goal
-        self.__append_state()
+        self.append_state()
         self.__append_goal()
 
         self.__goal_direction()
 
+        self.reached_goal = False
+
         """
         calculate possible previous goal position for initialization
         the previous goal does not exist after initialization, so the init value would be 0
-        This violates the Markov property, therefore we caluclate a dummy goal position.
-        We go in the oposite direction of the goal direction.
+        This violates the Markov property, therefore we calculate a dummy goal position.
+        We go in the opposite direction of the goal direction.
         self.state[2:4] += self.goal_direction * self.goal_max_speed
         """
         self.state[4:6] = self.state[2:4] - self.goal_direction * self.goal_max_speed
@@ -284,8 +306,8 @@ class SimpleWalk2DDynGoal(Env):
         """
 
         # logging.debug("visited states: ", self.state_array)
-        logging.debug("x: {}".format(self.state_array[0]))
-        logging.debug("y: {}".format(self.state_array[1]))
+        logging.info("x: {}".format(self.state_array[0]))
+        logging.info("y: {}".format(self.state_array[1]))
         goal = self.state[2:4]
         logging.debug("goal: {}".format(goal))
 
@@ -303,7 +325,7 @@ class SimpleWalk2DDynGoal(Env):
         ax.plot(self.goal_array[0], self.goal_array[1], linewidth=1.0, color='r', marker='*', markersize=1.0)
 
         ax.set(
-            xlim=(self.x_min, self.x_max), #xticks=np.arange(1, 8),
-            ylim=(self.x_min, self.x_max), #yticks=np.arange(1, 8))
-            )
+            xlim=(self.x_min, self.x_max),  # xticks=np.arange(1, 8),
+            ylim=(self.x_min, self.x_max),  # yticks=np.arange(1, 8))
+        )
         plt.show()
