@@ -16,8 +16,8 @@ def main():
         while not done:
             # env.render()
             action = env.action_space.sample()
-            n_state, reward, done, info = env.step(action)
-            logging.debug('Steps taken: {}'.format(info['steps_taken']))
+            state, reward, done, info = env.step(action)
+            logging.debug('Steps takenn_: {}'.format(info['steps_taken']))
             logging.debug('distance to goal: {}'.format(info['distance_to_goal']))
             score+=reward
         logging.info('Episode:{}'.format(episode)) #, score))
